@@ -5,10 +5,7 @@ import json
 import os
 import sys
 
-dir1 = os.path.join(os.getcwd(), sys.argv[1])
-dir2 = os.path.join(os.getcwd(), sys.argv[2])
 
-print(dir1, dir2)
 
 def check_directory():
     print(os.getcwd())
@@ -45,6 +42,7 @@ def create_sync_file(directory):
     open(path_to_file, 'w')
 
 
+# Iterate through the directory, checking if there is a sync file, and if there is subdirectories, and iterate through them
 def iterate_directory(directory):
 
     for file in os.listdir(directory):
@@ -53,20 +51,25 @@ def iterate_directory(directory):
 
         print(temp_file)
 
+        # if the current file is a directory, iterate again
         if os.path.isdir(temp_file):
-            print("hi from second iteration")
             iterate_directory(temp_file)
             
+    # 
     if not check_sync_file(directory):
         create_sync_file(directory)
 
 
 
 # main code
+dir1 = os.path.join(os.getcwd(), sys.argv[1])
+dir2 = os.path.join(os.getcwd(), sys.argv[2])
+
+print(dir1, dir2)
 
 dir_validity = check_directory()
 
-
+# checking the validity of the inputted directories
 if dir_validity == 1: # Both directories exist
     print("both exists")
     #checking for the sync files in the directories, if it dosn't exist, create one
