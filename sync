@@ -31,7 +31,7 @@ def create_directory():
 def check_sync_file(directory):
 
     # to be implemented
-    #loop through the directory for each files and check if there is a .sync.json file
+
     if False:
         return True
     else:
@@ -42,28 +42,20 @@ def create_sync_file(directory):
     path_to_file = os.path.join(directory, ".sync.json")
     open(path_to_file, 'w')
 
+    
 
-# main code
+
 
 dir_validity = check_directory()
 
-
-if dir_validity == 1: # Both directories exist
+if dir_validity == 1:
     print("both exists")
-    #checking for the sync files in the directories, if it dosn't exist, create one
-    if not check_sync_file(dir1): 
-        create_sync_file(dir1)
-    
-    if not check_sync_file(dir2):
-        create_sync_file(dir2)
-
 elif dir_validity == 2:
     print("none exists")
     exit()
 elif dir_validity == 3:
     print("one existes")
-    # creating a new directory
-    create_directory() 
+    create_directory()
 
     # if there is no sync files in the directory, create a new one
     if not check_sync_file(dir1):
@@ -71,5 +63,3 @@ elif dir_validity == 3:
     
     if not check_sync_file(dir2):
         create_sync_file(dir2)
-
-# read throught
