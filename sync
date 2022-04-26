@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 from genericpath import exists
 from importlib.resources import path
+import json
 import os
 import sys
 
@@ -31,35 +32,57 @@ def create_directory():
 def check_sync_file(directory):
 
     # to be implemented
-
-    if False:
-        return True
-    else:
-        return False
+    #loop through the directory for each files and check if there is a .sync.json file
+    for file in os.listdir(directory):
+        if file == ".sync.json":
+            return True
     
+    return False
+
 
 def create_sync_file(directory):
     path_to_file = os.path.join(directory, ".sync.json")
     open(path_to_file, 'w')
 
-    
+
+def iterate_directory(directory):
+
+    for file in os.listdir(directory):
+        #creating a temp file to maintain the full path name
+        temp_file = os.path.join(directory, file)
+
+        print(temp_file)
+
+        if os.path.isdir(temp_file):
+            print("hi from second iteration")
+            iterate_directory(temp_file)
+            
+    if not check_sync_file(directory):
+        create_sync_file(directory)
 
 
+
+# main code
 
 dir_validity = check_directory()
 
-if dir_validity == 1:
+
+if dir_validity == 1: # Both directories exist
     print("both exists")
+    #checking for the sync files in the directories, if it dosn't exist, create one
+    iterate_directory(dir1)
+    iterate_directory(dir2)
+
 elif dir_validity == 2:
     print("none exists")
     exit()
 elif dir_validity == 3:
     print("one existes")
-    create_directory()
+    # creating a new directory
+    create_directory() 
 
     # if there is no sync files in the directory, create a new one
-    if not check_sync_file(dir1):
-        create_sync_file(dir1)
-    
-    if not check_sync_file(dir2):
-        create_sync_file(dir2)
+    iterate_directory(dir1)
+    iterate_directory(dir2)
+
+# read throught
