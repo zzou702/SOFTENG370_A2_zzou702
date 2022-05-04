@@ -14,7 +14,6 @@ from xml.etree.ElementTree import ElementTree
 import shutil
 from datetime import datetime
 
-from torch import true_divide
 
 
 
@@ -41,14 +40,14 @@ def check_sync_file(directory):
     # to be implemented
     #loop through the directory for each files and check if there is a .sync.json file
     for file in os.listdir(directory):
-        if file == ".sync.json":
+        if file == ".sync":
             return True
     
     return False
 
 
 def create_sync_file(directory):
-    path_to_file = os.path.join(directory, ".sync.json")
+    path_to_file = os.path.join(directory, ".sync")
     open(path_to_file, 'w')
 
 
@@ -96,7 +95,7 @@ def initial_hash_files(directory):
             
 
         # checking for the current hash value of the file
-        json_file_path = os.path.join(directory, ".sync.json")
+        json_file_path = os.path.join(directory, ".sync")
         
         # string to be put into the json file
         json_string = {
@@ -126,7 +125,7 @@ def update_hash(directory):
     deleted_file = []
 
     # checking for the current hash value of the file
-    json_file_path = os.path.join(directory, ".sync.json")
+    json_file_path = os.path.join(directory, ".sync")
     
 
     for file in os.listdir(directory):
@@ -250,42 +249,76 @@ def merge_directories(d1, d2):
                 merge_directories(temp_file2, os.path.join(d1, j))
 
     
-    sync_file_1 = os.path.join(d1, ".sync.json") #sync file for directory one
-    sync_file_2 = os.path.join(d2, ".sync.json")
+    sync_file_1 = os.path.join(d1, ".sync") #sync file for directory one
+    sync_file_2 = os.path.join(d2, ".sync")
 
+    # if the sync file is not empty
+    if os.path.getsize(sync_file_1) != 0:
+        # for files in directory 1
+        with open(sync_file_1, "r+") as f1:
+            data1 = json.load(f1)
+            with open(sync_file_2, "r+") as f2:
+                data2 = json.load(f2)
+                
+                for file in data1:
+                    
+                    f_element = data1[file]
+                    f_status = f_element[0]
 
-    # for files in directory 1
-    with open(sync_file_1, "r+") as f1:
-        data1 = json.load(f1)
+                    try:
+                        data2[file]
+                    except KeyError:
+                        file_exists = False
+                    else:
+                        file_exists = True
+
+                    if file_exists:
+                        f_element2 = data2[file]
+                        f_status2 = f_element2[0]
+                    else:
+                        f_status2 = [0,0]
+
+                    # for deleted files in diretory 1 and not deleted in directory 2
+                    if f_status[1] == "deleted" and os.path.exists(os.path.join(d2, file)):
+                        os.remove(os.path.join(d2, file))
+                    elif f_status[1] != "deleted" and not os.path.exists(os.path.join(d2, file)) and f_status2[1] != "deleted": # Files that exist in d1 but not d2 and file 2 has not been delte
+                        shutil.copy(os.path.join(d1, file), os.path.join(d2, file))
             
-        for file in data1:
-            
-            f_element = data1[file]
-            f_status = f_element[0]
+        #updating hash information on directory 2
+        iterate_directory(d2)
 
-            # for deleted files in diretory 1 and not deleted in directory 2
-            if f_status[1] == "deleted" and os.path.exists(os.path.join(d2, file)):
-                os.remove(os.path.join(d2, file))
-            elif f_status[1] != "deleted" and not os.path.exists(os.path.join(d2, file)): # Files that exist in d1 but not d2
-                shutil.copy(os.path.join(d1, file), os.path.join(d2, file))
-        
-    #updating hash information on directory 2
-    iterate_directory(d2)
-
-    # for files in directory 2
-    with open(sync_file_2, "r+") as f2:
-        data2 = json.load(f2)
+    #if the sync file is not empty
+    if os.path.getsize(sync_file_2) != 0:
         # for files in directory 2
-        for file in data2:
-            f_element = data2[file]
-            f_status = f_element[0]
+        with open(sync_file_2, "r+") as f2:
+            data2 = json.load(f2)
 
-            if f_status[1] == "deleted" and os.path.exists(os.path.join(d1, file)):
-                os.remove(os.path.join(d1, file))
-            elif f_status[1] != "deleted" and not os.path.exists(os.path.join(d1, file)): # Files that exist in d2 but not d1
-                shutil.copy(os.path.join(d2, file), os.path.join(d1, file))
-        
-    iterate_directory(d1)
+            with open(sync_file_1, "r+") as f1:
+                data1 = json.load(f1)
+                # for files in directory 2
+                for file in data2:
+                    f_element = data2[file]
+                    f_status = f_element[0]
+
+                    try:
+                        data1[file]
+                    except KeyError:
+                        file_exists = False
+                    else:
+                        file_exists = True
+
+                    if file_exists:
+                        f_element2 = data1[file]
+                        f_status2 = f_element2[0]
+                    else:
+                        f_status2 = [0,0]
+
+                    if f_status[1] == "deleted" and os.path.exists(os.path.join(d1, file)):
+                        os.remove(os.path.join(d1, file))
+                    elif f_status[1] != "deleted" and not os.path.exists(os.path.join(d1, file)) and f_status2[1] != "deleted": # Files that exist in d2 but not d1, and file was not deleted in d1
+                        shutil.copy(os.path.join(d2, file), os.path.join(d1, file))
+            
+        iterate_directory(d1)
 
     
 
@@ -299,14 +332,11 @@ def merge_directories(d1, d2):
                     with open(sync_file_2, "r+") as f2:
                         data2 = json.load(f2)
 
-                        
                         f_element1 = data1[file1]
                         f_status1 = f_element1[0]
                         
                         f_element2 = data2[file2]
                         f_status2 = f_element2[0]
-
-
 
                         # if both files have the same digest but different mod date
                         if f_status1[1] == f_status2[1] and f_status1[0] != f_status2[0]:
@@ -366,6 +396,7 @@ def merge_directories(d1, d2):
 
                                     break
                             
+                            # continue to the next file in the direcotry if 
                             if cont_file:
                                 continue
 
