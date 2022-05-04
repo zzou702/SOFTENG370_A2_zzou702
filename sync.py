@@ -14,6 +14,8 @@ from xml.etree.ElementTree import ElementTree
 import shutil
 from datetime import datetime
 
+from torch import true_divide
+
 
 
 def check_directory(d1, d2):
@@ -297,14 +299,11 @@ def merge_directories(d1, d2):
                     with open(sync_file_2, "r+") as f2:
                         data2 = json.load(f2)
 
-                        
                         f_element1 = data1[file1]
                         f_status1 = f_element1[0]
                         
                         f_element2 = data2[file2]
                         f_status2 = f_element2[0]
-
-
 
                         # if both files have the same digest but different mod date
                         if f_status1[1] == f_status2[1] and f_status1[0] != f_status2[0]:
@@ -340,37 +339,57 @@ def merge_directories(d1, d2):
                             time1 = datetime.strptime(f_status1[0], '%Y-%m-%d %H:%M:%S')
                             time2 = datetime.strptime(f_status2[0], '%Y-%m-%d %H:%M:%S')
 
-                            # if current version of file 1 is the same one of the previous digest of file 2
-                            # for pre_value in f_element2:
-                            #     if f_status1[1] == pre_value[1]:
-                            #         # update the file 1 to match the current digest of file 2
-                            #         input_value = [f_status2[0], f_status2[1]]
-                            #         data1[file1].insert(0, input_value)
+                            cont_file = False
 
-                            #         # copy the file2 to file1 along with the matadata
-                            #         shutil.copy2(os.path.join(d2, file2), os.path.join(d1, file1))
 
-                            #         # update the sync file for d1
-                            #         with open(sync_file_1, "r+") as j_file:
+                            #if current version of file 1 is the same one of the previous digest of file 2
+                            for pre_value in f_element2:
+                                if f_status1 == pre_value:
+                                    print("true1")
 
-                            #             json.dump(data1, j_file, indent=2)
-                            #     break
+                                    # update the file 1 to match the current digest of file 2
+                                    input_value = [f_status2[0], f_status2[1]]
+                                    data1[file1].insert(0, input_value)
 
-                            # # if current version of file 2 is the same one of the previous digest of file 1
-                            # for pre_value in f_element1:
-                            #     if f_status2[1] == pre_value[1]:
-                            #         # update the file 1 to match the current digest of file 2
-                            #         input_value = [f_status1[0], f_status1[1]]
-                            #         data2[file2].insert(0, input_value)
+                                    # copy the file2 to file1 along with the matadata
+                                    shutil.copy2(os.path.join(d2, file2), os.path.join(d1, file1))
 
-                            #         # copy the file2 to file1 along with the matadata
-                            #         shutil.copy2(os.path.join(d1, file1), os.path.join(d2, file2))
+                                    # update the sync file for d1
+                                    with open(sync_file_1, "r+") as j_file:
 
-                            #         #update the sync file for d2
-                            #         with open(sync_file_2, "r+") as j_file:
+                                        json.dump(data1, j_file, indent=2)
+                                    
+                                    cont_file = True
 
-                            #             json.dump(data2, j_file, indent=2)
-                            #     break
+                                    break
+                            
+                            # continue to the next file in the direcotry if 
+                            if cont_file:
+                                continue
+
+                            # if current version of file 2 is the same one of the previous digest of file 1
+                            for pre_value in f_element1:
+                                if f_status2 == pre_value:
+                                    print("true2")
+
+                                    # update the file 1 to match the current digest of file 2
+                                    input_value = [f_status1[0], f_status1[1]]
+                                    data2[file2].insert(0, input_value)
+
+                                    # copy the file2 to file1 along with the matadata
+                                    shutil.copy2(os.path.join(d1, file1), os.path.join(d2, file2))
+
+                                    #update the sync file for d2
+                                    with open(sync_file_2, "r+") as j_file:
+
+                                        json.dump(data2, j_file, indent=2)
+
+                                    cont_file = True
+                                    
+                                    break
+
+                            if cont_file:
+                                continue
 
                             # if file 2 is more recent
                             if time2 > time1:
