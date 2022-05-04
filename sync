@@ -285,6 +285,8 @@ def merge_directories(d1, d2):
         
     iterate_directory(d1)
 
+    
+
     # for files that exists in both directories but has different content or modification time
     for file1 in os.listdir(d1):
         for file2 in os.listdir(d2):
@@ -294,20 +296,21 @@ def merge_directories(d1, d2):
                     data1 = json.load(f1)
                     with open(sync_file_2, "r+") as f2:
                         data2 = json.load(f2)
-                        
+
                         
                         f_element1 = data1[file1]
                         f_status1 = f_element1[0]
                         
-                        f_element2 = data2[file]
+                        f_element2 = data2[file2]
                         f_status2 = f_element2[0]
 
-    
+
 
                         # if both files have the same digest but different mod date
                         if f_status1[1] == f_status2[1] and f_status1[0] != f_status2[0]:
                             time1 = datetime.strptime(f_status1[0], '%Y-%m-%d %H:%M:%S')
                             time2 = datetime.strptime(f_status2[0], '%Y-%m-%d %H:%M:%S')
+                            print(time1, time2)
 
 
                             # if file one has earlier date
@@ -330,6 +333,12 @@ def merge_directories(d1, d2):
                                 with open(sync_file_1, "r+") as j_file:
                                     
                                     json.dump(data1, j_file, indent=2)
+                            
+                        
+                        # for files that have different digests i.e. different content
+                        elif f_status1[1] != f_status2[1]:
+
+                            pass
 
 
 
