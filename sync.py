@@ -19,7 +19,6 @@ from datetime import datetime
 
 def check_directory(d1, d2):
     if os.path.isdir(d1) and os.path.isdir(d2):
-        print("hi")
         return 1 # return 1 if both directories inputted exists
     elif (not os.path.isdir(d1) and (not os.path.isdir(d2))):
         return 2 # 2return 2 if none of the directories exists
@@ -36,8 +35,6 @@ def create_directory():
 
 # returns true if there is a sync file in the directory, 
 def check_sync_file(directory):
-
-    # to be implemented
     #loop through the directory for each files and check if there is a .sync.json file
     for file in os.listdir(directory):
         if file == ".sync":
@@ -53,7 +50,6 @@ def create_sync_file(directory):
 
 # Iterate through the directory, checking if there is a sync file, and if there is subdirectories, and iterate through them, and updating the hash values through each directories
 def iterate_directory(directory):
-
     for file in os.listdir(directory):
         #creating a temp file to maintain the full path name
         temp_file = os.path.join(directory, file)
@@ -62,7 +58,6 @@ def iterate_directory(directory):
         if os.path.isdir(temp_file):
             iterate_directory(temp_file)
             
-    # 
     if not check_sync_file(directory):
         create_sync_file(directory)
         initial_hash_files(directory)
@@ -127,8 +122,21 @@ def update_hash(directory):
     # checking for the current hash value of the file
     json_file_path = os.path.join(directory, ".sync")
     
-
     for file in os.listdir(directory):
+
+        # if the json file is not empty
+        if os.path.getsize(json_file_path) != 0:
+            with open(json_file_path, "r+") as j_file:
+                data = json.load(j_file)
+
+                # checking for deletion of files
+                for filename in data:
+                    temp = os.path.join(directory, filename)
+                    
+                    if not os.path.exists(temp) and filename not in deleted_file:
+                        deleted_file.append(filename)
+                        continue
+                
         #skipping past invisible files that start with .
         if file.startswith("."):
             continue
@@ -167,16 +175,17 @@ def update_hash(directory):
 
             continue
 
-
         with open(json_file_path, "r+") as j_file:
             data = json.load(j_file)
+            
 
-            # checking for deletion of files
-            for filename in data:
-                temp = os.path.join(directory, filename)
-                if not os.path.exists(temp) and filename not in deleted_file:
-                    deleted_file.append(filename)
-                    continue
+            # # checking for deletion of files
+            # for filename in data:
+            #     temp = os.path.join(directory, filename)
+                
+            #     if not os.path.exists(temp) and filename not in deleted_file:
+            #         deleted_file.append(filename)
+            #         continue
             
             # for the newly created files
             if file not in data:
@@ -248,7 +257,10 @@ def merge_directories(d1, d2):
             elif os.path.isdir(temp_file2) and os.path.isdir(os.path.join(d1, j)):
                 merge_directories(temp_file2, os.path.join(d1, j))
 
-    
+    # updating directory information for further operation
+    iterate_directory(d1)
+    iterate_directory(d2)
+
     sync_file_1 = os.path.join(d1, ".sync") #sync file for directory one
     sync_file_2 = os.path.join(d2, ".sync")
 
@@ -276,13 +288,38 @@ def merge_directories(d1, d2):
                         f_element2 = data2[file]
                         f_status2 = f_element2[0]
                     else:
-                        f_status2 = [0,0]
+                        f_status2 = ["0-0-0 0:0:0",0]
+                        
 
-                    # for deleted files in diretory 1 and not deleted in directory 2
+                    # for deleted files in diretory 1 and not deleted in directory 2, and the file has not been created again
                     if f_status[1] == "deleted" and os.path.exists(os.path.join(d2, file)):
-                        os.remove(os.path.join(d2, file))
+                        # tracking the newly created file
+                        newly_created = False
+
+                        # check whether the deletion in dir 1 matches an earlier deletion of dir 2
+                        for file2 in data2:
+                            # find the same file in the other diretory
+                            if file2 == file:
+                                # get the hash information on the file
+                                f_element2 = data2[file]
+                                #go through the information
+                                for temp_status in f_element2:
+                                    # matching earlier deletion of the same file, the file has been newly created
+                                    if f_status == temp_status:
+                                        shutil.copy2(os.path.join(d2, file), os.path.join(d1, file))
+                                        newly_created = True
+                                        break
+                                    else:
+                                        newly_created = False
+
+                        # if the file has not been newly created
+                        if newly_created == False:
+                            os.remove(os.path.join(d2, file))
+                            
                     elif f_status[1] != "deleted" and not os.path.exists(os.path.join(d2, file)) and f_status2[1] != "deleted": # Files that exist in d1 but not d2 and file 2 has not been delte
-                        shutil.copy(os.path.join(d1, file), os.path.join(d2, file))
+    
+                        shutil.copy2(os.path.join(d1, file), os.path.join(d2, file))
+                        
             
         #updating hash information on directory 2
         iterate_directory(d2)
@@ -310,14 +347,37 @@ def merge_directories(d1, d2):
                     if file_exists:
                         f_element2 = data1[file]
                         f_status2 = f_element2[0]
+                        
                     else:
-                        f_status2 = [0,0]
+                        f_status2 = ["0-0-0 0:0:0",0]
 
                     if f_status[1] == "deleted" and os.path.exists(os.path.join(d1, file)):
-                        os.remove(os.path.join(d1, file))
+                        # tracking the newly created file
+                        newly_created = False
+
+                        # check whether the deletion in dir 1 matches an earlier deletion of dir 2
+                        for file1 in data1:
+                            # find the same file in the other diretory
+                            if file1 == file:
+                                # get the hash information on the file
+                                f_element1 = data1[file]
+                                #go through the information
+                                for temp_status in f_element1:
+                                    # matching earlier deletion of the same file, the file has been newly created
+                                    if f_status == temp_status:
+                                        shutil.copy2(os.path.join(d1, file), os.path.join(d2, file))
+                                        newly_created = True
+                                        break
+                                    else:
+                                        newly_created = False
+
+                        # if the file has not been newly created
+                        if newly_created == False:
+                            os.remove(os.path.join(d1, file))
+
                     elif f_status[1] != "deleted" and not os.path.exists(os.path.join(d1, file)) and f_status2[1] != "deleted": # Files that exist in d2 but not d1, and file was not deleted in d1
-                        shutil.copy(os.path.join(d2, file), os.path.join(d1, file))
-            
+                        shutil.copy2(os.path.join(d2, file), os.path.join(d1, file)) 
+
         iterate_directory(d1)
 
     
@@ -378,7 +438,6 @@ def merge_directories(d1, d2):
                             #if current version of file 1 is the same one of the previous digest of file 2
                             for pre_value in f_element2:
                                 if f_status1 == pre_value:
-                                    print("true1")
 
                                     # update the file 1 to match the current digest of file 2
                                     input_value = [f_status2[0], f_status2[1]]
@@ -403,7 +462,6 @@ def merge_directories(d1, d2):
                             # if current version of file 2 is the same one of the previous digest of file 1
                             for pre_value in f_element1:
                                 if f_status2 == pre_value:
-                                    print("true2")
 
                                     # update the file 1 to match the current digest of file 2
                                     input_value = [f_status1[0], f_status1[1]]
@@ -469,6 +527,28 @@ def listdir_no_hidden(dir):
     
     return len(dir_list)
 
+def iterate_sub_empty_dir(d1, d2):
+    for file in os.listdir(d1):
+        #creating a temp file to maintain the full path name
+        temp_file = os.path.join(d1, file)
+
+        # if the current file is a directory, iterate again
+        if os.path.isdir(temp_file):
+            iterate_sub_empty_dir(temp_file)
+    
+    dir_length1 = listdir_no_hidden(d1)
+    dir_length2 = listdir_no_hidden(d2)
+
+    # print(dir_length1, dir_length2)
+
+    # If dir1 is empty i.e. length = one since the sync file is created
+    if dir_length1 == 0 and dir_length2 != 0:
+        copy_dir(d2, d1)
+        #iterate_directory(dir1)
+    elif dir_length1 != 0 and dir_length2 == 0: # if dir2 is empty
+        print("dir2 is empty")
+        copy_dir(d1, d2)
+
 
 # main code
 dir1 = os.path.join(os.getcwd(), sys.argv[1])
@@ -494,6 +574,7 @@ elif dir_validity == 3:
 iterate_directory(dir1)
 iterate_directory(dir2)
 
+
 dir_length1 = listdir_no_hidden(dir1)
 dir_length2 = listdir_no_hidden(dir2)
 
@@ -501,6 +582,7 @@ dir_length2 = listdir_no_hidden(dir2)
 
 # If dir1 is empty i.e. length = one since the sync file is created
 if dir_length1 == 0 and dir_length2 != 0:
+    print("dir1 is empty")
     copy_dir(dir2, dir1)
     #iterate_directory(dir1)
 elif dir_length1 != 0 and dir_length2 == 0: # if dir2 is empty

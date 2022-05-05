@@ -165,17 +165,21 @@ def p9():
     test_sync()
     print_directory('dir1', 0)
     print()
-    print_directory('dir2', 0)
+    print_directory('dir2', 0)    
+
     print("\n --- delete all files ---\n")
     remove_files(["dir1/file1_1.txt", "dir1/file1_2.txt", "dir1/dir1_1/dir1_1_1/file1_1_1_1.txt",
         "dir1/dir1_2/file1_2_1.txt", "dir2/file2_1.txt", "dir2/dir2_1/file2_1_1.txt"])
+    
     test_sync()
     print_directory('dir1', 0)
     print()
     print_directory('dir2', 0)
+
     print("\n --- recreate two ---\n")
     make_file("dir1/dir1_1/dir1_1_1/file1_1_1_1.txt", "I'm back.")
     make_file("dir1/file1_1.txt", "I'm back.")
+    
     test_sync()
     print_directory('dir1', 0)
     print()
@@ -192,13 +196,12 @@ def p9():
 #    and the modification time > 1 second later:""", p6)
 # surround_test("""7. This should show two pairs of matching directories
 #    with the second pair showing different sizes and modification times:""", p7)
-
+surround_test("""8. This should show the two directories.
+   Then they should only contain c.txt.
+   Then they should have a new version of b.txt:""", p8)
 
 
 # To do:
 
-# surround_test("""8. This should show the two directories.
-#    Then they should only contain c.txt.
-#    Then they should have a new version of b.txt:""", p8)
 # surround_test("""9. This starts by showing the initial synchronized directories.
 #    file1_1.txt must be 81 bytes long:""", p9)
