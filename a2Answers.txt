@@ -1,34 +1,37 @@
 Quesiton 1:
-How well would this synchronisation implementation cope with a large number of files? Explain your
-answer
+Assuming that this synchronisation is implemented in the real world, where human errors can occur, the assumptions stated may not be carried out perfectly (or if we ignore the assumptions)
+For example, as the number of files and subdirectories gets larger, there is a higher chance of a file and directory sharing the same name. and resulting in potential unwanted removal / creation of 
+some files/directories. Therefore this synchronisation implementation cannot handle a large number of files assuming that the assumptions can be broken in the real world environment
 
-
+If we assume that the assumptions holds true, when dealing with a large number of files, this synchronisation can be very inefficient due the having to read the json file along with the files
+in every directories and subdirectories, resulting in many iterations and recursions when trying to accessing the files, processing those information may take even longer. Especially when the 
+program have to compare the information of the files in directories, or in the json file, needing at least two loops for two directories/json files being compared, along with the recursions 
+and iterations needed to get to the comparison stage (Both directories need to iterate to the same subdirectories) mentioned, this synchronisation implementation does not cope well with a 
+large number of files.
 
 
 Quesiton 2:
-Several of the assumptions cannot be enforced. We rely on the user being careful. This is partly because
-of the limitations of most current file systems. Take two of the assumptions above (you may also specify
-other assumptions that I haven't explicitly mentioned), and describe ways in which the assumptions can
-be made unnecessary. Your solutions should make the synchronization process safer or more reliable. At
-least one of the solutions should mention some extra facility that must be added to the file system to
-make the solution possible. 
-
-assumptions:
+Assumptions 1:
 If two files have the same signature, they are the same version. (In reality this may not be the case because
 the file could have been altered and then changed back to its original state.)
 
+Solution 1:
+This assumption can be made unnecessary, if the file system maintains all the past signatures of a file in a separate hidden file, when we try figure out whether 2 files are the same version
+we can access this hidden file that maintains the past signatures, therefore able to find out whether the file has been altered and changed back, and whether the two files are actually of the 
+same version
 
+Assumption 2:
 All permissions needed to create files and directories will be available, so you don't have to worry about file
 creation errors.
 
+Solution 2:
+This assumption can be made unnecessary, once the user starts the program, if we detect that the user does not have permission to create files and directories, we can prompt the user to change 
+the ownership of the directories using the chown command
 
-The pathnames sent to the sync program will be independent. You don't have to worry about infinite
-recursion because of one directory being inside the other.
+We can exit the program after giving the user information on how to change ownership in shell (chown -R $USER:$USER PATH_TO_DIRECTORY), once the user has done so, permission is granted and the 
+program will be able to create files, and will run.
 
+Or we can do it in the program without asking for permission from the user to change his permission. We can do this by using the os.getuid to get the current user's id, then we can call chown to
+change the ownership of the directories to the current user. 
 
-No ordinary files in one directory will match the names of directories in the other directory. No symbolic
-links will create cycles in the directories. You don't have to deal with deleted directories, but you do have to
-deal with deleted files. No sync files will be deleted or modified by the test programs.
-
-
-The file modification times are not reliable.
+And the user will therefore have permission to create files and directories
