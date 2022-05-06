@@ -1,0 +1,34 @@
+Quesiton 1:
+How well would this synchronisation implementation cope with a large number of files? Explain your
+answer
+
+
+
+
+Quesiton 2:
+Several of the assumptions cannot be enforced. We rely on the user being careful. This is partly because
+of the limitations of most current file systems. Take two of the assumptions above (you may also specify
+other assumptions that I haven't explicitly mentioned), and describe ways in which the assumptions can
+be made unnecessary. Your solutions should make the synchronization process safer or more reliable. At
+least one of the solutions should mention some extra facility that must be added to the file system to
+make the solution possible. 
+
+assumptions:
+If two files have the same signature, they are the same version. (In reality this may not be the case because
+the file could have been altered and then changed back to its original state.)
+
+
+All permissions needed to create files and directories will be available, so you don't have to worry about file
+creation errors.
+
+
+The pathnames sent to the sync program will be independent. You don't have to worry about infinite
+recursion because of one directory being inside the other.
+
+
+No ordinary files in one directory will match the names of directories in the other directory. No symbolic
+links will create cycles in the directories. You don't have to deal with deleted directories, but you do have to
+deal with deleted files. No sync files will be deleted or modified by the test programs.
+
+
+The file modification times are not reliable.

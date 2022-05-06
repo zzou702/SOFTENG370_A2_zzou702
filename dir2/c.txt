@@ -1,2 +1,0 @@
-The contents of file, base/dir2/c.txt:
-Still not very exciting.

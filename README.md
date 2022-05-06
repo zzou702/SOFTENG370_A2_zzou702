@@ -7,7 +7,7 @@ run "chmod +x makefile"
 Then run the makefile:
 "./makefile"
 
-The previous should created a "sync" file that you can execute
+The previous command should have created a "sync" file that you can execute
 
 To run the sync file, run:
 ./sync directory1 directory2 
